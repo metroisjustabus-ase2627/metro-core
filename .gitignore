@@ -490,3 +490,6 @@ $RECYCLE.BIN/
 # Arquivos enviados para o storage local
 src/Presentation/Metro.Api/Public/Storage/**
 !src/Presentation/Metro.Api/Public/Storage/.gitkeep
+
+# AI usage evidence must be versioned (CON-PRC-02)
+!.ai/logs/
