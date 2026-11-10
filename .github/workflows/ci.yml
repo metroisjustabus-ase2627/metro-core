@@ -1,4 +1,4 @@
-# CI — build the Metro.sln solution on every push to main and on every pull request to main.
+# CI: build Metro.sln on pushes to main, develop, feature/** and bugfix/**, on pull requests, and on manual runs.
 # Requirements: CON-CI-01 (automatic build from the repository), CON-CI-02.
 # Tests, linting, Docker and deployment are added by separate workflows/tasks.
 
@@ -6,9 +6,10 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, develop, 'feature/**', 'bugfix/**']
   pull_request:
-    branches: [main]
+    branches: [main, develop]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -25,7 +26,8 @@ env:
 jobs:
   build:
     name: Build (Release)
-    runs-on: ubuntu-latest
+    # Defaults to GitHub-hosted; set the repository variable CI_RUNNER to use the self-hosted runner.
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
 
     steps:
       - name: Checkout
