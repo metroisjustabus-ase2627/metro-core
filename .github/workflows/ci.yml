@@ -1,6 +1,7 @@
 # CI: build Metro.sln on pushes to main, develop, feature/** and bugfix/**, on pull requests, and on manual runs.
 # Requirements: CON-CI-01 (automatic build from the repository), CON-CI-02.
-# Tests, linting, Docker and deployment are added by separate workflows/tasks.
+# After a successful build, the "image" job builds the Docker image and, on pushes to main, pushes it to GHCR
+# tagged with the commit SHA (CON-CI-02, CON-DEP-01). Tests, linting and deployment are separate tasks.
 
 name: CI
 
@@ -16,7 +17,8 @@ permissions:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  # Cancel superseded runs on PRs only: every push to main must produce its own image (CON-CI-02).
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
   DOTNET_NOLOGO: "true"
@@ -51,3 +53,69 @@ jobs:
 
       - name: Build
         run: dotnet build Metro.sln --no-restore -c Release
+
+  image:
+    name: Docker image (GHCR)
+    needs: build
+    # Pushes to main publish the image; pull requests only build it to validate the Dockerfile.
+    if: github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
+    permissions:
+      contents: read
+      packages: write
+
+    env:
+      IMAGE_NAME: ghcr.io/metroisjustabus-ase2627/metro-core
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Compute image tags and labels
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_NAME }}
+          # Full commit SHA always; "latest" only on the default branch (main).
+          tags: |
+            type=sha,format=long,prefix=
+            type=raw,value=latest,enable={{is_default_branch}}
+          labels: |
+            org.opencontainers.image.title=metro-core
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          # Single-manifest image: the SHA tag resolves directly to the runnable image.
+          provenance: false
+
+      - name: Image summary
+        if: github.event_name != 'pull_request'
+        run: |
+          {
+            echo "### Published image"
+            echo
+            echo '```'
+            echo "${{ steps.meta.outputs.tags }}"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
