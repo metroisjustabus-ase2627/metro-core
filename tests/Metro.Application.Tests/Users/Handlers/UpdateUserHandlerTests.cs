@@ -111,14 +111,14 @@ public class UpdateUserHandlerTests
         string? password = null,
         string role = "client",
         bool? isActive = null) => new()
-    {
-        Id = id,
-        Name = "New Name",
-        Email = "new@example.com",
-        Document = "222",
-        Phone = "222",
-        Password = password,
-        Role = role,
-        IsActive = isActive
-    };
+        {
+            Id = id,
+            Name = "New Name",
+            Email = "new@example.com",
+            Document = "222",
+            Phone = "222",
+            Password = password,
+            Role = role,
+            IsActive = isActive
+        };
 }

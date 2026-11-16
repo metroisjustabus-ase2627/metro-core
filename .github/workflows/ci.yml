@@ -1,7 +1,9 @@
 # CI: build Metro.sln on pushes to main, develop, feature/** and bugfix/**, on pull requests, and on manual runs.
 # Requirements: CON-CI-01 (automatic build from the repository), CON-CI-02.
 # After a successful build, the "image" job builds the Docker image and, on pushes to main, pushes it to GHCR
-# tagged with the commit SHA (CON-CI-02, CON-DEP-01). Tests, linting and deployment are separate tasks.
+# tagged with the commit SHA (CON-CI-02, CON-DEP-01). The build job also runs the automated tests, and the
+# "quality" job runs basic code quality checks (formatting, analyzers, vulnerable packages); the image job
+# requires both. Deployment is a separate task.
 
 name: CI
 
@@ -54,9 +56,57 @@ jobs:
       - name: Build
         run: dotnet build Metro.sln --no-restore -c Release
 
+      - name: Test
+        run: >
+          dotnet test Metro.sln --no-build -c Release
+          --logger "trx;LogFileName=test-results.trx"
+          --results-directory ./TestResults
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: TestResults/**/*.trx
+          if-no-files-found: warn
+
+  quality:
+    name: Code quality
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore
+        run: dotnet restore Metro.sln
+
+      # Formatting / whitespace rules (.editorconfig defaults).
+      - name: Verify formatting
+        run: dotnet format whitespace Metro.sln --no-restore --verify-no-changes --verbosity diagnostic
+
+      # Built-in .NET analyzers; surface warnings in the log.
+      - name: Static analysis (build with analyzers)
+        run: >
+          dotnet build Metro.sln --no-restore -c Release
+          -p:EnableNETAnalyzers=true -p:AnalysisLevel=latest
+
+      - name: Check vulnerable packages
+        run: |
+          dotnet list Metro.sln package --vulnerable --include-transitive 2>&1 | tee vuln.txt
+          if grep -q "has the following vulnerable packages" vuln.txt; then
+            # Warn only: transitive findings (e.g. System.Security.Cryptography.Pkcs via MailKit) are tracked, not blocking.
+            echo "::warning::Vulnerable NuGet packages found (see log)"
+          fi
+
   image:
     name: Docker image (GHCR)
-    needs: build
+    needs: [build, quality]
     # Pushes to main publish the image; pull requests only build it to validate the Dockerfile.
     if: github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
     runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
