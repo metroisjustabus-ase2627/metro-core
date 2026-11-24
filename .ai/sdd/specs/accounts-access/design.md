@@ -56,3 +56,9 @@ sequenceDiagram
 - **Database defense-in-depth:** Even if a bug bypasses FluentValidation, PostgreSQL `CK_User_Role` prevents non-canonical role persistence.
 - **Rate limiting:** Fixed-window rate limits protect `POST /api/v1/users`, `POST /api/v1/login`, and recovery endpoints (`429 Too Many Requests`).
 - **Transaction safety:** `CreateUserHandler`, `UpdateUserHandler`, and `DeleteUserHandler` roll back `IUnityOfWork` on persistence exceptions.
+
+## 4. Pending design changes (proposed 2026-11-24, pending team review)
+
+- **E-mail normalisation (F5):** lower-case `Email` in `CreateUserHandler`, `UpdateUserHandler`, `LoginHandler` and the password-recovery handlers before lookup or insert; a data migration lower-cases existing rows. The current unique index on `User.Email` then rejects case variants.
+- **Concurrent duplicate registration (F6):** the `GetByEmail` pre-check and the insert are not atomic, so two simultaneous requests with the same e-mail reach the unique index; the resulting `DbUpdateException` currently surfaces as `500`. `CreateUserHandler` should catch the unique-violation (`PostgresException` SQLSTATE `23505`) and return `409 Conflict`.
+- **Delete vs deactivate (F7, Q-ACC-01):** depends on the team decision; no change until then.

@@ -46,9 +46,29 @@ Scenario: ACC-S4 — Self-registration cannot escalate privileges to Staff (FR-A
   Given an unauthenticated visitor or authenticated Passenger sends POST /api/v1/users with role "Staff"
   When UserController.Create processes the request
   Then command.Role is overwritten to "Passenger" before dispatching to CreateUserHandler
+
+Scenario: ACC-S5 — Duplicate e-mail with different letter case is rejected (FR-ACC-01) [proposed, pending team review]
+  Given an account already exists with email "passenger@example.com"
+  When a caller submits POST /api/v1/users with email "Passenger@Example.com"
+  Then the response is 409 Conflict with message "Email is already registered."
+  And no second user row is inserted
+
+Scenario: ACC-S6 — Failed logins are indistinguishable (FR-ACC-02) [proposed, pending team review]
+  Given an active account "passenger@example.com" and an inactive account "old@example.com"
+  When a caller posts to POST /api/v1/login with an unknown e-mail, or with a wrong password, or with the inactive account
+  Then each response is 401 Unauthorized with the same body
+  And no refresh token is stored
+
+Scenario: ACC-S7 — Refresh token rotation (FR-ACC-02) [proposed, pending team review]
+  Given a logged-in user holding refresh token R1
+  When she posts R1 to POST /api/v1/login/refresh
+  Then she receives a new access token and a new refresh token R2
+  And posting R1 again returns 401 Unauthorized
 ```
 
 ## 4. Assumptions and Open Questions
 
 - **Decision (ADR-003):** Legacy database roles (`master`, `client`) are migrated to `Staff` and `Passenger` via EF Core migration `20261124120000_CanonicalUserRoles` and guarded by PostgreSQL constraint `CK_User_Role`.
 - **Open note:** `PasswordRecoveryController` and `Metro.Infrastructure.File` remain from the initial starter template; team must decide before Final Delivery whether to formalize password recovery as a derived requirement or remove unused file storage (`KISS`, `T05`).
+- **Proposed decision (pending team review):** e-mail addresses are compared case-insensitively. They are stored lower-case so the existing unique index on `User.Email` applies (see review F5, F6).
+- **Open question (Q-ACC-01, pending team review):** should Staff hard-delete accounts? `DELETE /api/v1/users/{id}` removes the row; once tickets and validations reference users this would break history (`FR-HIS-02`). Proposed: deactivate only (`IsActive = false`) and disable delete for users with history (review F7).
