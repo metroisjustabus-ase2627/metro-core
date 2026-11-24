@@ -37,6 +37,9 @@ services:
       Authentication__JWT__Key: ${JWT_KEY:?JWT_KEY is required}
       Authentication__JWT__AccessTokenExpiresInMinutes: ${JWT_ACCESS_MINUTES:-60}
       Authentication__JWT__RefreshTokenExpiresInDays: ${JWT_REFRESH_DAYS:-7}
+      APP_VERSION: ${APP_VERSION:-local}
+      Seed__StaffEmail: ${SEED_STAFF_EMAIL:-staff@metroisjustabus.local}
+      Seed__StaffPassword: ${SEED_STAFF_PASSWORD:-}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://127.0.0.1:8080/health"]
       interval: 10s

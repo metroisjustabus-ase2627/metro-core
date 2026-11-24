@@ -30,12 +30,17 @@ RUN dotnet publish src/Presentation/Metro.Api/Metro.Api.csproj \
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 WORKDIR /app
 
+ARG APP_VERSION=local
+
 RUN apt-get update \
     && apt-get install -y --no-install-recommends curl \
     && rm -rf /var/lib/apt/lists/*
 
 ENV ASPNETCORE_URLS=http://+:8080
 ENV ASPNETCORE_ENVIRONMENT=Production
+ENV APP_VERSION=${APP_VERSION}
+
+LABEL org.opencontainers.image.revision="${APP_VERSION}"
 
 COPY --from=build /app/publish .
 

@@ -1,0 +1,61 @@
+# Reproducible Production VM deployment using exact immutable commit SHA from GHCR (CON-DEP-01, CON-DEP-02, CON-CI-02).
+# Usage on Prod VM (with .env.prod present outside Git):
+#   IMAGE_TAG=<commit-sha> docker compose -f docker-compose.prod.yml --env-file .env.prod pull api
+#   IMAGE_TAG=<commit-sha> docker compose -f docker-compose.prod.yml --env-file .env.prod up -d
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: metro-prod-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-metro_prod}
+      POSTGRES_USER: ${POSTGRES_USER:-metro}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+    volumes:
+      - metro_prod_pgdata:/var/lib/postgresql/data
+    networks:
+      - metro-prod-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-metro} -d ${POSTGRES_DB:-metro_prod}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    image: ghcr.io/metroisjustabus-ase2627/metro-core:${IMAGE_TAG:?IMAGE_TAG commit SHA is required}
+    container_name: metro-prod-api
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "${API_HOST_PORT:-8080}:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+      DeveloperEnvironments: "false"
+      APP_VERSION: ${IMAGE_TAG:?IMAGE_TAG commit SHA is required}
+      PostgreSQL__Connection: Host=postgres;Port=5432;Database=${POSTGRES_DB:-metro_prod};Username=${POSTGRES_USER:-metro};Password=${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      Authentication__JWT__Issuer: ${JWT_ISSUER:-metro-core}
+      Authentication__JWT__Audience: ${JWT_AUDIENCE:-metro-core-api}
+      Authentication__JWT__Key: ${JWT_KEY:?JWT_KEY is required}
+      Authentication__JWT__AccessTokenExpiresInMinutes: ${JWT_ACCESS_MINUTES:-30}
+      Authentication__JWT__RefreshTokenExpiresInDays: ${JWT_REFRESH_DAYS:-7}
+      Seed__StaffEmail: ${SEED_STAFF_EMAIL:-staff@metroisjustabus.local}
+      Seed__StaffPassword: ${SEED_STAFF_PASSWORD:-}
+    networks:
+      - metro-prod-net
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+volumes:
+  metro_prod_pgdata:
+
+networks:
+  metro-prod-net:
+    driver: bridge

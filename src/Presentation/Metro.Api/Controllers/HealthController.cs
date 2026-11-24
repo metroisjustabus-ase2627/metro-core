@@ -1,3 +1,4 @@
+using System.Reflection;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
@@ -13,10 +14,17 @@ namespace Metro.Api.Controllers;
 public class HealthController : ControllerBase
 {
     private readonly HealthCheckService _healthCheckService;
+    private readonly IConfiguration _configuration;
+    private readonly IHostEnvironment _environment;
 
-    public HealthController(HealthCheckService healthCheckService)
+    public HealthController(
+        HealthCheckService healthCheckService,
+        IConfiguration configuration,
+        IHostEnvironment environment)
     {
         _healthCheckService = healthCheckService;
+        _configuration = configuration;
+        _environment = environment;
     }
 
     [HttpGet]
@@ -25,10 +33,17 @@ public class HealthController : ControllerBase
     public async Task<IActionResult> Get(CancellationToken cancellationToken)
     {
         var report = await _healthCheckService.CheckHealthAsync(cancellationToken: cancellationToken);
+        var version = _configuration["APP_VERSION"]
+            ?? _configuration["App:Version"]
+            ?? Assembly.GetExecutingAssembly()
+                .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion
+            ?? "dev";
 
         var response = new HealthStatusResponse
         {
             Status = report.Status.ToString(),
+            Version = version,
+            Environment = _environment.EnvironmentName,
             TotalDuration = report.TotalDuration.ToString(),
             Checks = report.Entries.Select(entry => new HealthCheckItemResponse
             {

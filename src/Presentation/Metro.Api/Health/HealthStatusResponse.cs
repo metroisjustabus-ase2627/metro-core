@@ -3,6 +3,8 @@ namespace Metro.Api.Health;
 public sealed class HealthStatusResponse
 {
     public string Status { get; init; } = string.Empty;
+    public string Version { get; init; } = string.Empty;
+    public string Environment { get; init; } = string.Empty;
     public string TotalDuration { get; init; } = string.Empty;
     public IReadOnlyList<HealthCheckItemResponse> Checks { get; init; } = [];
 }

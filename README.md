@@ -69,3 +69,19 @@ make docker-down                    # Para os containers
 make docker-logs                    # Segue os logs da API
 ```
 
+---
+
+## CI / CD / CDE e Deploy em VMs DEI (Build Only Once)
+
+As responsabilidades estão separadas em 3 workflows (`T03`, `ADR-004`):
+1. **CI (`.github/workflows/ci.yml`)**: `dotnet build -c Release`, testes unitários xUnit com cobertura Cobertura (`coverlet.collector`), formatação (`.editorconfig`), `.NET Analyzers`, SCA NuGet bloqueante, Gitleaks secret scan (`CON-DEP-05`) e publicação da **imagem Docker imutável** `ghcr.io/metroisjustabus-ase2627/metro-core:<commit-sha>` com `APP_VERSION=<commit-sha>` em `GET /health` (`CON-CI-02`).
+2. **CD — Development VM (`.github/workflows/cd-dev.yml`)**: dispara automaticamente após CI verde em `main`, faz `pull` da mesma imagem `<commit-sha>` na VM Dev (`docker-compose.dev.yml`), valida `/health` (status `Healthy` + SHA) e executa rollback automático em caso de falha (`CON-CI-04`).
+3. **CDE — Production VM (`.github/workflows/cd-prod.yml`)**: promoção controlada (`workflow_dispatch` + aprovação humana no GitHub Environment `production`) da mesma imagem `<commit-sha>` validada em Dev (`docker-compose.prod.yml`), com smoke check `/health` + rollback automático.
+
+### Provisionar e ativar as VMs DEI (`CON-DEP-02`, `CON-DEP-03`)
+1. Correr `sudo bash infra/bootstrap-vm.sh dev` (ou `prod`) na VM Ubuntu do DEI.
+2. Criar `.env.dev` / `.env.prod` na VM (baseado em `.env.example`, com `JWT_KEY`, `POSTGRES_PASSWORD`, `SEED_STAFF_EMAIL` e `SEED_STAFF_PASSWORD`).
+3. **Recomendado (self-hosted runner na VM DEI):** registar o runner com labels `self-hosted,linux,dev` (ou `prod`) e definir a repository variable `DEV_RUNNER` / `PROD_RUNNER` (ou `CI_RUNNER`).
+4. **Alternativa (SSH):** definir `DEV_SSH_HOST`/`DEV_SSH_USER` + secret `DEV_SSH_KEY` (ou `PROD_*`).
+
+

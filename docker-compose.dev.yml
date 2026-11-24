@@ -1,0 +1,61 @@
+# Reproducible development deployment using versioned GHCR images (CON-DEP-01, CON-DEP-02, CON-CI-02).
+# Usage on the dev VM (with .env.dev present):
+#   IMAGE_TAG=<commit-sha> docker compose -f docker-compose.dev.yml --env-file .env.dev pull
+#   IMAGE_TAG=<commit-sha> docker compose -f docker-compose.dev.yml --env-file .env.dev up -d
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: metro-dev-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-metro_dev}
+      POSTGRES_USER: ${POSTGRES_USER:-metro}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+    volumes:
+      - metro_dev_pgdata:/var/lib/postgresql/data
+    networks:
+      - metro-dev-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-metro} -d ${POSTGRES_DB:-metro_dev}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    image: ghcr.io/metroisjustabus-ase2627/metro-core:${IMAGE_TAG:-latest}
+    container_name: metro-dev-api
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "${API_HOST_PORT:-8080}:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
+      ASPNETCORE_URLS: http://+:8080
+      DeveloperEnvironments: ${DEVELOPER_ENVIRONMENTS:-true}
+      APP_VERSION: ${IMAGE_TAG:-latest}
+      PostgreSQL__Connection: Host=postgres;Port=5432;Database=${POSTGRES_DB:-metro_dev};Username=${POSTGRES_USER:-metro};Password=${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      Authentication__JWT__Issuer: ${JWT_ISSUER:-metro-core}
+      Authentication__JWT__Audience: ${JWT_AUDIENCE:-metro-core-api}
+      Authentication__JWT__Key: ${JWT_KEY:?JWT_KEY is required}
+      Authentication__JWT__AccessTokenExpiresInMinutes: ${JWT_ACCESS_MINUTES:-60}
+      Authentication__JWT__RefreshTokenExpiresInDays: ${JWT_REFRESH_DAYS:-7}
+      Seed__StaffEmail: ${SEED_STAFF_EMAIL:-staff@metroisjustabus.local}
+      Seed__StaffPassword: ${SEED_STAFF_PASSWORD:-}
+    networks:
+      - metro-dev-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+volumes:
+  metro_dev_pgdata:
+
+networks:
+  metro-dev-net:
+    driver: bridge
