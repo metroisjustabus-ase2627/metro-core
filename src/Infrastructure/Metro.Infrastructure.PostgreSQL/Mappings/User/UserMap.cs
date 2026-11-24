@@ -6,7 +6,8 @@ namespace Metro.Infrastructure.PostgreSQL.Mappings.User
     {
         public void Configure(Microsoft.EntityFrameworkCore.Metadata.Builders.EntityTypeBuilder<Metro.Domain.Users.Entities.User> builder)
         {
-            builder.ToTable("User");
+            builder.ToTable("User", table =>
+                table.HasCheckConstraint("CK_User_Role", "\"Role\" IN ('Passenger', 'Staff')"));
             builder.Property(x => x.Id);
             builder.Property(x => x.Name);
             builder.Property(x => x.Email);

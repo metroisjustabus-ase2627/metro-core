@@ -35,7 +35,7 @@ namespace Metro.Application.Users.Handlers
 
             if (userViewModel is not null)
             {
-                return ApiResult<CreatedId>.Conflict("O e-mail já está cadastrado.");
+                return ApiResult<CreatedId>.Conflict("Email is already registered.");
             }
 
             var hashedPassword = _passwordService.HashPassword(request.Password);

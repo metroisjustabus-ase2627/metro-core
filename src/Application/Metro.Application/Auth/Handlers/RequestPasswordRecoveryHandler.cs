@@ -38,7 +38,7 @@ namespace Metro.Application.Auth.Handlers
 
         public async Task<ApiResult<object>> Handle(RequestPasswordRecoveryCommand request, CancellationToken cancellationToken)
         {
-            var success = ApiResult<object>.Ok(message: "Se o e-mail estiver cadastrado, você receberá um código de recuperação.");
+            var success = ApiResult<object>.Ok(message: "If the email is registered, you will receive a recovery code.");
 
             var user = await _userRepository.GetEmail(request.Email!.Trim());
             if (user is null || !user.IsActive)
@@ -68,8 +68,8 @@ namespace Metro.Application.Auth.Handlers
 
             await _emailService.Send(
                 user.Email,
-                "Recuperação de senha",
-                $"<p>Seu código de recuperação é: <strong>{code}</strong></p><p>Ele é válido por {_settings.CodeExpiresInMinutes} minutos.</p>");
+                "Password recovery",
+                $"<p>Your recovery code is: <strong>{code}</strong></p><p>It is valid for {_settings.CodeExpiresInMinutes} minutes.</p>");
 
             return success;
         }

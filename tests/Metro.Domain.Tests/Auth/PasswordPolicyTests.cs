@@ -6,6 +6,8 @@ namespace Metro.Domain.Tests.Auth;
 public class PasswordPolicyTests
 {
     [Theory]
+    [Trait("Requirement", "FR-ACC-01")]
+    [Trait("Requirement", "NFR-SEC-01")]
     [InlineData("Abcdef1")]
     [InlineData("abcdefgh")]
     [InlineData("ABCDEFGH")]
@@ -21,6 +23,8 @@ public class PasswordPolicyTests
     }
 
     [Theory]
+    [Trait("Requirement", "FR-ACC-01")]
+    [Trait("Requirement", "NFR-SEC-01")]
     [InlineData("Abcdefg1")]
     [InlineData("Secret123")]
     [InlineData("NovaSenha1")]

@@ -9,7 +9,9 @@ using Metro.Infrastructure.PostgreSQL.Contexts;
 using Metro.Domain.Services;
 using Metro.Infrastructure.File.Extensions;
 using Metro.Infrastructure.Email.Services;
+using Metro.Domain.Auth;
 using Metro.Domain.Auth.Services;
+using Metro.Domain.Users;
 using Metro.Infrastructure.Auth.Services;
 using Metro.Api.Exceptions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -62,12 +64,12 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddAuthorization(options =>
 {
-    options.AddPolicy("master", policy =>
-        policy.RequireRole("master"));
-    options.AddPolicy("client", policy =>
-        policy.RequireRole("client"));
-    options.AddPolicy("user", policy =>
-        policy.RequireRole("master", "client"));
+    options.AddPolicy("Staff", policy =>
+        policy.RequireRole(UserRoles.Staff));
+    options.AddPolicy("Passenger", policy =>
+        policy.RequireRole(UserRoles.Passenger));
+    options.AddPolicy("Authenticated", policy =>
+        policy.RequireRole(UserRoles.Staff, UserRoles.Passenger));
 });
 
 ConfigureServices(builder.Services);
@@ -154,7 +156,7 @@ builder.Services.AddSwaggerGen(c =>
         Scheme = "bearer",
         BearerFormat = "JWT",
         In = ParameterLocation.Header,
-        Description = "JWT no header. Exemplo: Bearer {token}"
+        Description = "JWT in Authorization header. Example: Bearer {token}"
     });
     c.AddSecurityRequirement(doc => new OpenApiSecurityRequirement
     {
@@ -183,9 +185,25 @@ using (var scope = app.Services.CreateScope())
     var context = scope.ServiceProvider.GetRequiredService<PostgreSQLContext>();
     context.MigrateDatabase();
 
-    var passwordService = scope.ServiceProvider.GetRequiredService<IPasswordService>();
-    var hashedPassword = passwordService.HashPassword("131102");
-    context.SeedMasterUser(hashedPassword);
+    var staffPassword = configuration["Seed:StaffPassword"];
+    if (!string.IsNullOrWhiteSpace(staffPassword))
+    {
+        if (!PasswordPolicy.IsValid(staffPassword))
+        {
+            throw new InvalidOperationException($"Seed:StaffPassword does not meet policy: {PasswordPolicy.RequirementsMessage}");
+        }
+
+        var staffEmail = string.IsNullOrWhiteSpace(configuration["Seed:StaffEmail"])
+            ? "staff@metroisjustabus.local"
+            : configuration["Seed:StaffEmail"]!;
+        var passwordService = scope.ServiceProvider.GetRequiredService<IPasswordService>();
+        var hashedPassword = passwordService.HashPassword(staffPassword);
+        context.SeedStaffUser(staffEmail, hashedPassword);
+    }
+    else
+    {
+        app.Logger.LogInformation("Skipping initial Staff user seed because Seed:StaffPassword is not configured.");
+    }
 }
 
 var enableSwagger = app.Environment.IsDevelopment()

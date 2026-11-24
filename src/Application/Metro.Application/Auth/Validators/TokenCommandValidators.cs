@@ -8,7 +8,7 @@ namespace Metro.Application.Auth.Validators
         public RefreshTokenCommandValidator()
         {
             RuleFor(command => command.RefreshToken)
-                .NotEmpty().WithMessage("O refresh token é obrigatório.");
+                .NotEmpty().WithMessage("Refresh token is required.");
         }
     }
 }

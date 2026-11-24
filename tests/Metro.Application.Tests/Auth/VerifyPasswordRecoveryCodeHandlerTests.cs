@@ -7,6 +7,7 @@ using NSubstitute;
 using Shouldly;
 using Metro.Domain.Auth.Entities;
 using Metro.Domain.Auth.Repositories;
+using Metro.Domain.Users;
 using Metro.Domain.Users.Entities;
 using Metro.Domain.Users.Repositories;
 
@@ -75,6 +76,6 @@ public class VerifyPasswordRecoveryCodeHandlerTests
         document: "1",
         phone: "1",
         password: Convert.ToBase64String(new byte[] { 1, 2, 3, 4 }),
-        role: "client",
+        role: UserRoles.Passenger,
         isActive: true);
 }

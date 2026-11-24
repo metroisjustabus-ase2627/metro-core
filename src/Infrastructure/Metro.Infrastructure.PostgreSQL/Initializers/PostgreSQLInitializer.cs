@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Metro.Domain.Users;
 using Metro.Domain.Users.Entities;
 using Metro.Infrastructure.PostgreSQL.Contexts;
 
@@ -11,24 +12,24 @@ namespace Metro.Infrastructure.PostgreSQL.Initializers
             context.Database.Migrate();
         }
 
-        public static void SeedMasterUser(this PostgreSQLContext context, string hashedPassword)
+        public static void SeedStaffUser(this PostgreSQLContext context, string email, string hashedPassword)
         {
-            if (context.Users.Any(u => u.Email == "master"))
+            if (context.Users.Any(u => u.Email == email || u.Role == UserRoles.Staff))
             {
                 return;
             }
 
-            var master = new User(
-                name: "Master",
-                email: "master",
-                document: "00000000000",
-                phone: "00000000000",
+            var staff = new User(
+                name: "Operational Staff",
+                email: email,
+                document: string.Empty,
+                phone: string.Empty,
                 password: hashedPassword,
-                role: "master",
+                role: UserRoles.Staff,
                 isActive: true
             );
 
-            context.Users.Add(master);
+            context.Users.Add(staff);
             context.SaveChanges();
         }
     }

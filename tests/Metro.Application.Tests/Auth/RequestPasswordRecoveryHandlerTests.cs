@@ -8,6 +8,7 @@ using NSubstitute;
 using Shouldly;
 using Metro.Domain.Auth.Entities;
 using Metro.Domain.Auth.Repositories;
+using Metro.Domain.Users;
 using Metro.Domain.Users.Entities;
 using Metro.Domain.Users.Repositories;
 
@@ -83,7 +84,7 @@ public class RequestPasswordRecoveryHandlerTests
             c.UserId == user.Id && c.CodeHash == "hash"));
         await _emailService.Received(1).Send(
             user.Email,
-            "Recuperação de senha",
+            "Password recovery",
             Arg.Is<string>(html => html.Contains("123456")));
         await _unityOfWork.Received(1).CommitAsync(Arg.Any<CancellationToken>());
     }
@@ -94,6 +95,6 @@ public class RequestPasswordRecoveryHandlerTests
         document: "1",
         phone: "1",
         password: Convert.ToBase64String(new byte[] { 1, 2, 3, 4 }),
-        role: "client",
+        role: UserRoles.Passenger,
         isActive: true);
 }

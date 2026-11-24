@@ -1,6 +1,7 @@
 using Metro.Application.Results;
 using Metro.Domain.Auth.Services;
 using Metro.Application.Users.Commands;
+using Metro.Domain.Users;
 using Metro.Domain.Users.Entities;
 using Metro.Application.Users.Handlers;
 using Metro.Domain.Users.Repositories;
@@ -38,10 +39,11 @@ public class UpdateUserHandlerTests
     }
 
     [Fact]
+    [Trait("Requirement", "FR-ACC-02")]
     public async Task Handle_WhenValid_UpdatesUser_AndReturnsOk()
     {
         var user = CreateUser();
-        var command = CreateCommand(user.Id, role: "master", isActive: true);
+        var command = CreateCommand(user.Id, role: UserRoles.Staff, isActive: true);
         _userRepository.GetById(user.Id).Returns(user);
 
         var result = await _sut.Handle(command, CancellationToken.None);
@@ -49,7 +51,7 @@ public class UpdateUserHandlerTests
         result.Status.ShouldBe(ResultStatus.Ok);
         user.Name.ShouldBe(command.Name);
         user.Email.ShouldBe(command.Email);
-        user.Role.ShouldBe("master");
+        user.Role.ShouldBe(UserRoles.Staff);
         user.IsActive.ShouldBeTrue();
 
         await _unityOfWork.Received(1).BeginAsync(Arg.Any<CancellationToken>());
@@ -103,13 +105,13 @@ public class UpdateUserHandlerTests
         document: "111",
         phone: "111",
         password: Convert.ToBase64String(new byte[] { 1, 2, 3 }),
-        role: "client",
+        role: UserRoles.Passenger,
         isActive: false);
 
     private static UpdateUserCommand CreateCommand(
         Guid id,
         string? password = null,
-        string role = "client",
+        string role = UserRoles.Passenger,
         bool? isActive = null) => new()
         {
             Id = id,

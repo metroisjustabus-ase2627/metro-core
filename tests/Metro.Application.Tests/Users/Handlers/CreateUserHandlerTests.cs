@@ -1,5 +1,6 @@
 using Metro.Domain.Auth.Services;
 using Metro.Application.Users.Commands;
+using Metro.Domain.Users;
 using Metro.Domain.Users.Entities;
 using Metro.Application.Users.Handlers;
 using Metro.Domain.Users.Repositories;
@@ -28,6 +29,7 @@ public class CreateUserHandlerTests
     }
 
     [Fact]
+    [Trait("Requirement", "FR-ACC-01")]
     public async Task Handle_WhenEmailAlreadyExists_ReturnsConflict_AndDoesNotPersist()
     {
         var command = CreateCommand();
@@ -38,14 +40,14 @@ public class CreateUserHandlerTests
             Email = command.Email,
             Document = "1",
             Phone = "1",
-            Role = "client",
+            Role = UserRoles.Passenger,
             IsActive = true
         });
 
         var result = await _sut.Handle(command, CancellationToken.None);
 
         result.Status.ShouldBe(ResultStatus.Conflict);
-        result.Message.ShouldBe("O e-mail já está cadastrado.");
+        result.Message.ShouldBe("Email is already registered.");
         result.Data.ShouldBeNull();
         await _userRepository.DidNotReceive().Create(Arg.Any<User>());
         await _unityOfWork.DidNotReceive().BeginAsync(Arg.Any<CancellationToken>());
@@ -53,9 +55,11 @@ public class CreateUserHandlerTests
     }
 
     [Fact]
+    [Trait("Requirement", "FR-ACC-01")]
+    [Trait("Requirement", "FR-ACC-02")]
     public async Task Handle_WhenValid_CreatesUser_AndReturnsCreatedWithId()
     {
-        var command = CreateCommand(role: "master");
+        var command = CreateCommand(role: UserRoles.Staff);
         _userQueryRepository.GetByEmail(command.Email).Returns((GetUserViewModel?)null);
 
         User? created = null;
@@ -70,7 +74,7 @@ public class CreateUserHandlerTests
         result.Data!.Id.ShouldBe(created!.Id);
         created.Name.ShouldBe(command.Name);
         created.Email.ShouldBe(command.Email);
-        created.Role.ShouldBe("master");
+        created.Role.ShouldBe(UserRoles.Staff);
         created.IsActive.ShouldBeTrue();
 
         await _unityOfWork.Received(1).BeginAsync(Arg.Any<CancellationToken>());
@@ -80,6 +84,7 @@ public class CreateUserHandlerTests
     }
 
     [Fact]
+    [Trait("Requirement", "FR-ACC-01")]
     public async Task Handle_WhenPersistFails_RollsBack_AndRethrows()
     {
         var command = CreateCommand();
@@ -94,7 +99,7 @@ public class CreateUserHandlerTests
         await _unityOfWork.DidNotReceive().CommitAsync(Arg.Any<CancellationToken>());
     }
 
-    private static CreateUserCommand CreateCommand(string role = "client") => new()
+    private static CreateUserCommand CreateCommand(string role = UserRoles.Passenger) => new()
     {
         Name = "Ana Silva",
         Email = "ana@example.com",

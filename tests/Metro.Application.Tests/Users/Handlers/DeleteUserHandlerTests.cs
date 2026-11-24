@@ -1,5 +1,6 @@
 using Metro.Application.Results;
 using Metro.Application.Users.Commands;
+using Metro.Domain.Users;
 using Metro.Domain.Users.Entities;
 using Metro.Application.Users.Handlers;
 using Metro.Domain.Users.Repositories;
@@ -37,7 +38,7 @@ public class DeleteUserHandlerTests
     [Fact]
     public async Task Handle_WhenValid_DeletesUser_AndReturnsOk()
     {
-        var user = new User("Ana", "ana@example.com", "1", "1", "pwd", "client");
+        var user = new User("Ana", "ana@example.com", "1", "1", "pwd", UserRoles.Passenger);
         _userRepository.GetById(user.Id).Returns(user);
 
         var result = await _sut.Handle(new DeleteUserCommand { Id = user.Id }, CancellationToken.None);
@@ -51,7 +52,7 @@ public class DeleteUserHandlerTests
     [Fact]
     public async Task Handle_WhenPersistFails_RollsBack_AndRethrows()
     {
-        var user = new User("Ana", "ana@example.com", "1", "1", "pwd", "client");
+        var user = new User("Ana", "ana@example.com", "1", "1", "pwd", UserRoles.Passenger);
         _userRepository.GetById(user.Id).Returns(user);
         _userRepository.Delete(user).ThrowsAsync(new InvalidOperationException("db error"));
 

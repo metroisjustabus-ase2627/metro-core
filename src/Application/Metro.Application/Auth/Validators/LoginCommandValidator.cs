@@ -8,11 +8,11 @@ namespace Metro.Application.Auth.Validators
         public LoginCommandValidator()
         {
             RuleFor(command => command.Email)
-                .NotEmpty().WithMessage("O e-mail é obrigatório.")
-                .EmailAddress().WithMessage("O e-mail informado é inválido.");
+                .NotEmpty().WithMessage("Email is required.")
+                .EmailAddress().WithMessage("Email is invalid.");
 
             RuleFor(command => command.Password)
-                .NotEmpty().WithMessage("A senha é obrigatória.");
+                .NotEmpty().WithMessage("Password is required.");
         }
     }
 }

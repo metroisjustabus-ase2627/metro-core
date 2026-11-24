@@ -31,7 +31,7 @@ namespace Metro.Application.Auth.Handlers
 
         public async Task<ApiResult<object>> Handle(VerifyPasswordRecoveryCodeCommand request, CancellationToken cancellationToken)
         {
-            var invalid = ApiResult<object>.Unauthorized("Código inválido ou expirado.");
+            var invalid = ApiResult<object>.Unauthorized("Invalid or expired recovery code.");
 
             var user = await _userRepository.GetEmail(request.Email!.Trim());
             if (user is null || !user.IsActive)
@@ -64,7 +64,7 @@ namespace Metro.Application.Auth.Handlers
                 return invalid;
             }
 
-            return ApiResult<object>.Ok(message: "Código válido.");
+            return ApiResult<object>.Ok(message: "Recovery code is valid.");
         }
     }
 }

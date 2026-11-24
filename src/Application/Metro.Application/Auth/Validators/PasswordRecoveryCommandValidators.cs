@@ -9,8 +9,8 @@ namespace Metro.Application.Auth.Validators
         public RequestPasswordRecoveryCommandValidator()
         {
             RuleFor(command => command.Email)
-                .NotEmpty().WithMessage("O e-mail é obrigatório.")
-                .EmailAddress().WithMessage("O e-mail informado é inválido.");
+                .NotEmpty().WithMessage("Email is required.")
+                .EmailAddress().WithMessage("Email is invalid.");
         }
     }
 
@@ -19,12 +19,12 @@ namespace Metro.Application.Auth.Validators
         public VerifyPasswordRecoveryCodeCommandValidator()
         {
             RuleFor(command => command.Email)
-                .NotEmpty().WithMessage("O e-mail é obrigatório.")
-                .EmailAddress().WithMessage("O e-mail informado é inválido.");
+                .NotEmpty().WithMessage("Email is required.")
+                .EmailAddress().WithMessage("Email is invalid.");
 
             RuleFor(command => command.Code)
-                .NotEmpty().WithMessage("O código é obrigatório.")
-                .Length(6).WithMessage("O código deve ter 6 dígitos.");
+                .NotEmpty().WithMessage("Recovery code is required.")
+                .Length(6).WithMessage("Recovery code must be 6 digits.");
         }
     }
 
@@ -33,15 +33,15 @@ namespace Metro.Application.Auth.Validators
         public ResetPasswordCommandValidator()
         {
             RuleFor(command => command.Email)
-                .NotEmpty().WithMessage("O e-mail é obrigatório.")
-                .EmailAddress().WithMessage("O e-mail informado é inválido.");
+                .NotEmpty().WithMessage("Email is required.")
+                .EmailAddress().WithMessage("Email is invalid.");
 
             RuleFor(command => command.Code)
-                .NotEmpty().WithMessage("O código é obrigatório.")
-                .Length(6).WithMessage("O código deve ter 6 dígitos.");
+                .NotEmpty().WithMessage("Recovery code is required.")
+                .Length(6).WithMessage("Recovery code must be 6 digits.");
 
             RuleFor(command => command.NewPassword)
-                .NotEmpty().WithMessage("A nova senha é obrigatória.")
+                .NotEmpty().WithMessage("New password is required.")
                 .Must(PasswordPolicy.IsValid).WithMessage(PasswordPolicy.RequirementsMessage);
         }
     }

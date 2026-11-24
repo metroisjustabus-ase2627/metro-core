@@ -7,6 +7,7 @@ using Metro.Application.Users.Commands;
 using Metro.Application.Users.Queries;
 using Metro.Application.Users.ViewModels;
 using Metro.Application.Results;
+using Metro.Domain.Users;
 
 namespace Metro.Api.Controllers
 {
@@ -23,7 +24,7 @@ namespace Metro.Api.Controllers
         }
 
         [HttpGet("me")]
-        [Authorize("user")]
+        [Authorize("Authenticated")]
         public async Task<ObjectResult> Me()
         {
             var idValue = User.FindFirstValue(ClaimTypes.Name);
@@ -39,12 +40,12 @@ namespace Metro.Api.Controllers
         }
 
         [HttpGet]
-        [Authorize("master")]
+        [Authorize("Staff")]
         public async Task<ObjectResult> List([FromQuery] ListUserQuery query)
             => FromResult(await _mediator.Send(query));
 
         [HttpGet("{id}")]
-        [Authorize("master")]
+        [Authorize("Staff")]
         public async Task<ObjectResult> Get(Guid id)
             => FromResult(await _mediator.Send(new GetUserQuery
             {
@@ -55,16 +56,16 @@ namespace Metro.Api.Controllers
         [EnableRateLimiting("create-user")]
         public async Task<ObjectResult> Create([FromBody] CreateUserCommand command)
         {
-            if (!User.IsInRole("master"))
+            if (!User.IsInRole(UserRoles.Staff))
             {
-                command.Role = "client";
+                command.Role = UserRoles.Passenger;
             }
 
             return FromResult(await _mediator.Send(command));
         }
 
         [HttpPut("{id}")]
-        [Authorize("master")]
+        [Authorize("Staff")]
         public async Task<ObjectResult> Update(Guid id, [FromBody] UpdateUserCommand command)
         {
             command.Id = id;
@@ -72,7 +73,7 @@ namespace Metro.Api.Controllers
         }
 
         [HttpDelete("{id}")]
-        [Authorize("master")]
+        [Authorize("Staff")]
         public async Task<ObjectResult> Delete(Guid id)
             => FromResult(await _mediator.Send(new DeleteUserCommand
             {

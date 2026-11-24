@@ -2,6 +2,7 @@ using FluentValidation.TestHelper;
 using Metro.Application.Auth.Validators;
 using Metro.Application.Users.Validators;
 using Metro.Domain.Auth;
+using Metro.Domain.Users;
 using Shouldly;
 
 namespace Metro.Application.Tests.Validators;
@@ -9,6 +10,8 @@ namespace Metro.Application.Tests.Validators;
 public class CommandValidatorTests
 {
     [Fact]
+    [Trait("Requirement", "FR-ACC-01")]
+    [Trait("Requirement", "NFR-SEC-01")]
     public void CreateUserCommand_WhenPasswordInvalid_HasError()
     {
         var validator = new CreateUserCommandValidator();
@@ -16,10 +19,8 @@ public class CommandValidatorTests
         {
             Name = "Ana",
             Email = "ana@example.com",
-            Document = "123",
-            Phone = "1199",
             Password = "123",
-            Role = "client"
+            Role = UserRoles.Passenger
         });
 
         result.ShouldHaveValidationErrorFor(command => command.Password)
@@ -27,9 +28,14 @@ public class CommandValidatorTests
     }
 
     [Theory]
+    [Trait("Requirement", "FR-ACC-02")]
+    [Trait("Requirement", "NFR-SEC-02")]
     [InlineData("admin")]
+    [InlineData("user")]
+    [InlineData("master")]
+    [InlineData("client")]
     [InlineData("")]
-    [InlineData("CLIENT")]
+    [InlineData("PASSENGER")]
     public void CreateUserCommand_WhenRoleInvalid_HasError(string role)
     {
         var validator = new CreateUserCommandValidator();
@@ -37,20 +43,23 @@ public class CommandValidatorTests
         {
             Name = "Ana",
             Email = "ana@example.com",
-            Document = "123",
-            Phone = "1199",
             Password = "Secret123!",
             Role = role
         });
 
         result.ShouldHaveValidationErrorFor(command => command.Role)
-            .WithErrorMessage("O perfil deve ser master ou client.");
+            .WithErrorMessage(UserRoles.ValidationMessage);
     }
 
     [Theory]
+    [Trait("Requirement", "FR-ACC-02")]
+    [Trait("Requirement", "NFR-SEC-02")]
     [InlineData("admin")]
+    [InlineData("user")]
+    [InlineData("master")]
+    [InlineData("client")]
     [InlineData("")]
-    [InlineData("CLIENT")]
+    [InlineData("STAFF")]
     public void UpdateUserCommand_WhenRoleInvalid_HasError(string role)
     {
         var validator = new UpdateUserCommandValidator();
@@ -59,30 +68,44 @@ public class CommandValidatorTests
             Id = Guid.NewGuid(),
             Name = "Ana",
             Email = "ana@example.com",
-            Document = "123",
-            Phone = "1199",
             Role = role
         });
 
         result.ShouldHaveValidationErrorFor(command => command.Role)
-            .WithErrorMessage("O perfil deve ser master ou client.");
+            .WithErrorMessage(UserRoles.ValidationMessage);
     }
 
-    [Fact]
-    public void CreateUserCommand_WhenValid_HasNoErrors()
+    [Theory]
+    [Trait("Requirement", "FR-ACC-01")]
+    [Trait("Requirement", "FR-ACC-02")]
+    [InlineData(UserRoles.Passenger)]
+    [InlineData(UserRoles.Staff)]
+    public void CreateUserCommand_WhenValidCanonicalRole_HasNoErrors(string role)
     {
         var validator = new CreateUserCommandValidator();
         var result = validator.TestValidate(new Metro.Application.Users.Commands.CreateUserCommand
         {
-            Name = "Ana",
             Email = "ana@example.com",
-            Document = "123",
-            Phone = "1199",
             Password = "Secret123!",
-            Role = "client"
+            Role = role
         });
 
         result.IsValid.ShouldBeTrue();
+    }
+
+    [Fact]
+    [Trait("Requirement", "FR-ACC-01")]
+    public void CreateUserCommand_WithEmailAndPasswordOnly_DefaultsToPassengerAndIsValid()
+    {
+        var command = new Metro.Application.Users.Commands.CreateUserCommand
+        {
+            Email = "passenger@example.com",
+            Password = "Secret123!"
+        };
+
+        command.Role.ShouldBe(UserRoles.Passenger);
+        var validator = new CreateUserCommandValidator();
+        validator.TestValidate(command).IsValid.ShouldBeTrue();
     }
 
     [Fact]

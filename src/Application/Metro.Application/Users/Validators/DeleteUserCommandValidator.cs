@@ -8,7 +8,7 @@ namespace Metro.Application.Users.Validators
         public DeleteUserCommandValidator()
         {
             RuleFor(command => command.Id)
-                .NotEmpty().WithMessage("O id do usuário é obrigatório.");
+                .NotEmpty().WithMessage("User ID is required.");
         }
     }
 }

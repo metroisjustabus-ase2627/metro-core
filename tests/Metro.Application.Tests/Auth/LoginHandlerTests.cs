@@ -6,6 +6,7 @@ using Metro.Shared.Data;
 using NSubstitute;
 using Shouldly;
 using Metro.Domain.Auth.Repositories;
+using Metro.Domain.Users;
 using Metro.Domain.Users.Entities;
 using Metro.Domain.Users.Repositories;
 using Metro.Domain.Auth.Entities;
@@ -85,6 +86,7 @@ public class LoginHandlerTests
     }
 
     [Fact]
+    [Trait("Requirement", "FR-ACC-02")]
     public async Task Handle_WhenCredentialsValid_ReturnsOkWithAccessAndRefreshTokens()
     {
         var user = CreateActiveUser();
@@ -120,6 +122,6 @@ public class LoginHandlerTests
         document: "1",
         phone: "1",
         password: "AQAAAA-stored-hash",
-        role: "client",
+        role: UserRoles.Passenger,
         isActive: isActive);
 }

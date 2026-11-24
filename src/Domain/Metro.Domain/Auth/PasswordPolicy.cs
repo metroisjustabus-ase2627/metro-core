@@ -3,7 +3,7 @@ namespace Metro.Domain.Auth
     public static class PasswordPolicy
     {
         public const string RequirementsMessage =
-            "A senha deve ter no mínimo 8 caracteres, incluindo letras maiúsculas, minúsculas e números.";
+            "Password must be at least 8 characters long and include uppercase, lowercase, and numeric characters.";
 
         public static bool IsValid(string? password)
         {
