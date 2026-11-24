@@ -21,7 +21,7 @@
 - Routes: `api/v1/{resource}` (plural), e.g. `api/v1/users`
 - Controllers inherit `ApiController` and return `FromResult(...)`
 - Controllers stay thin: authorize, bind, `_mediator.Send(...)`, map result
-- Prefer `[Authorize("role")]` policies (`user`, `master`, …) at the action
+- Prefer `[Authorize("policy")]` policies (`Authenticated`, `Passenger`, `Staff`) at the action; canonical database/JWT roles are `Passenger` and `Staff` (see `UserRoles`, `FR-ACC-02`, `ADR-003`)
 
 ## Request flow
 
@@ -41,7 +41,7 @@
 - Handlers return `ApiResult<T>` (`Ok`, `Created`, `NoContent`, `BadRequest`, `Unauthorized`, `NotFound`, `Conflict`, `InternalError`)
 - Controllers must not invent HTTP status codes ad hoc — use `FromResult`
 - Validation failures go through FluentValidation; business conflicts (e.g. duplicate email) return `Conflict` from the handler
-- User-facing validation/conflict messages may be in Portuguese (current codebase style)
+- User-facing validation and conflict messages must be in English (`docs/spec/requirements.md` §7 Out of Scope)
 
 ## Naming
 

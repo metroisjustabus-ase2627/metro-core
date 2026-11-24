@@ -9,10 +9,10 @@ Backend counterpart of [`metro-web/docs/final-delivery-plan.md`](../../metro-web
 | Area | Status | Notes |
 |---|---|---|
 | Auth: login, refresh token, password recovery | Done | `LoginController`, `PasswordRecoveryController` (FR-ACC-02, NFR-SEC-01 partly) |
-| Users: create / get / update | Done | `UserController`; roles to verify against Passenger / Staff (FR-ACC-02) |
-| Health endpoint | Done | `/health`; must still report dependencies and deployed version (NFR-OBS-01, CON-CI-02) |
-| Docker image + compose (API + PostgreSQL) | Done | RabbitMQ and notifications service missing |
-| CI: build, tests, quality checks, image to GHCR | Done on branch `feature/ci-tests-quality` | Dev deploy, integration/system tests, gates, rollback missing |
+| Users: create / get / update | Done | `UserController`; canonical roles `Passenger` / `Staff` enforced with DB `CHECK` constraint (`FR-ACC-02`, `ADR-003`) |
+| Health endpoint | Done | `/health` reports PostgreSQL dependency and deployed commit SHA (`APP_VERSION`, `NFR-OBS-01`, `CON-CI-02`) |
+| Docker image + compose (local, dev, prod) | Done | `docker-compose.{yml,dev.yml,prod.yml}` + `infra/bootstrap-vm.sh`; RabbitMQ and notifications service still to add |
+| CI / CD-Dev / CDE-Prod workflows | Done (base) | Split into `ci.yml`, `cd-dev.yml`, `cd-prod.yml` with Gitleaks + rollback (`ADR-004`); integration/system test jobs & DEI VMs pending |
 | Network, disruptions, tickets, validation, occupancy, subscriptions, history | Not started | Split below |
 
 ## 2. Split by person

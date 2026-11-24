@@ -20,6 +20,6 @@ Permanent project context:
 
 System requirements v2 (FR, NFR, constraints, out of scope, decisions): [`docs/spec/requirements.md`](docs/spec/requirements.md). Use these IDs (FR-xxx-nn, NFR-xxx-nn, CON-xxx-nn) in specs, tests and commit messages. Identical copy in the other repository; when updating, update both.
 
-Full course statement (v1.0, 2026-09-29): [`docs/spec/metro-is-just-a-bus.md`](docs/spec/metro-is-just-a-bus.md). Identical copy in `metro-web/docs/spec/`; when updating, update both.
+Full course statement (v1.1, 2026-11-17): [`docs/spec/metro-is-just-a-bus.md`](docs/spec/metro-is-just-a-bus.md). Identical copy in `metro-web/docs/spec/`; when updating, update both.
 
 The system must be distributed: a single REST backend with all functionality does not meet the statement.

@@ -1,0 +1,145 @@
+{
+  "schemaVersion": "1.0",
+  "project": "MetroIsJustABus",
+  "updatedAt": "2026-11-24",
+  "specReference": "docs/spec/requirements.md (v2) + Automated_Software_Development_Project_Complete.v1.1.pdf",
+  "items": [
+    {
+      "requirementId": "FR-ACC-01",
+      "sources": ["SRC-07"],
+      "adrs": ["docs/adr/ADR-003-canonical-roles-and-authorization.md"],
+      "sddFeature": ".ai/sdd/specs/accounts-access/",
+      "code": [
+        "src/Application/Metro.Application/Users/Commands/CreateUserCommand.cs",
+        "src/Application/Metro.Application/Users/Validators/CreateUserCommandValidator.cs",
+        "src/Application/Metro.Application/Users/Handlers/CreateUserHandler.cs"
+      ],
+      "tests": [
+        "tests/Metro.Application.Tests/Validators/CommandValidatorTests.cs",
+        "tests/Metro.Application.Tests/Users/Handlers/CreateUserHandlerTests.cs"
+      ],
+      "status": "implemented-backend-pending-web"
+    },
+    {
+      "requirementId": "FR-ACC-02",
+      "sources": ["SRC-07", "SRC-08", "D-06"],
+      "adrs": ["docs/adr/ADR-003-canonical-roles-and-authorization.md"],
+      "sddFeature": ".ai/sdd/specs/accounts-access/",
+      "code": [
+        "src/Domain/Metro.Domain/Users/UserRoles.cs",
+        "src/Infrastructure/Metro.Infrastructure.PostgreSQL/Mappings/User/UserMap.cs",
+        "src/Infrastructure/Metro.Infrastructure.PostgreSQL/Migrations/20261124120000_CanonicalUserRoles.cs",
+        "src/Infrastructure/Metro.Infrastructure.PostgreSQL/Initializers/PostgreSQLInitializer.cs",
+        "src/Presentation/Metro.Api/Program.cs",
+        "src/Presentation/Metro.Api/Controllers/UserController.cs"
+      ],
+      "tests": [
+        "tests/Metro.Domain.Tests/Users/UserRolesTests.cs",
+        "tests/Metro.Application.Tests/Validators/CommandValidatorTests.cs",
+        "tests/Metro.Application.Tests/Auth/LoginHandlerTests.cs"
+      ],
+      "status": "implemented-backend-pending-web"
+    },
+    {
+      "requirementId": "NFR-SEC-01",
+      "sources": ["SRC-07"],
+      "adrs": ["docs/adr/ADR-003-canonical-roles-and-authorization.md"],
+      "sddFeature": ".ai/sdd/specs/accounts-access/",
+      "code": [
+        "src/Domain/Metro.Domain/Auth/PasswordPolicy.cs",
+        "src/Infrastructure/Metro.Infrastructure.Auth/Services/PasswordService.cs"
+      ],
+      "tests": [
+        "tests/Metro.Domain.Tests/Auth/PasswordPolicyTests.cs"
+      ],
+      "status": "implemented"
+    },
+    {
+      "requirementId": "NFR-SEC-02",
+      "sources": ["SRC-08"],
+      "adrs": ["docs/adr/ADR-003-canonical-roles-and-authorization.md"],
+      "sddFeature": ".ai/sdd/specs/accounts-access/",
+      "code": [
+        "src/Presentation/Metro.Api/Program.cs",
+        "src/Presentation/Metro.Api/Controllers/UserController.cs"
+      ],
+      "tests": [
+        "tests/Metro.Domain.Tests/Users/UserRolesTests.cs",
+        "tests/Metro.Application.Tests/Validators/CommandValidatorTests.cs"
+      ],
+      "status": "partial-integration-403-matrix-pending"
+    },
+    {
+      "requirementId": "CON-CI-01",
+      "sources": ["SRC-14"],
+      "adrs": ["docs/adr/ADR-004-vm-deployment-and-ci-cde-cd-separation.md"],
+      "sddFeature": "cross-cutting",
+      "code": [
+        ".github/workflows/ci.yml",
+        ".github/workflows/cd-dev.yml",
+        ".github/workflows/cd-prod.yml"
+      ],
+      "tests": ["CI workflow build/test/quality/secret-scan/artifact"],
+      "status": "partial-integration-system-jobs-pending"
+    },
+    {
+      "requirementId": "CON-CI-02",
+      "sources": ["SRC-14"],
+      "adrs": ["docs/adr/ADR-004-vm-deployment-and-ci-cde-cd-separation.md"],
+      "sddFeature": "cross-cutting",
+      "code": [
+        "Dockerfile",
+        ".github/workflows/ci.yml",
+        "src/Presentation/Metro.Api/Controllers/HealthController.cs"
+      ],
+      "tests": ["Health endpoint version + GHCR SHA tag verification in cd-dev.yml and cd-prod.yml"],
+      "status": "implemented"
+    },
+    {
+      "requirementId": "CON-DEP-02",
+      "sources": ["SRC-15"],
+      "adrs": ["docs/adr/ADR-004-vm-deployment-and-ci-cde-cd-separation.md"],
+      "sddFeature": "cross-cutting",
+      "code": [
+        "infra/bootstrap-vm.sh",
+        "docker-compose.dev.yml",
+        "docker-compose.prod.yml"
+      ],
+      "tests": ["docker compose config validation"],
+      "status": "partial-awaiting-dei-vms"
+    },
+    {
+      "requirementId": "CON-PRC-02",
+      "sources": ["SRC-16", "FB-M1"],
+      "adrs": ["docs/adr/ADR-005-specifications-artifacts-vs-prompts.md"],
+      "sddFeature": "cross-cutting",
+      "code": [
+        ".ai/logs/tools/ai-log.mjs",
+        ".ai/logs/tools/review.mjs",
+        ".ai/logs/tools/report.mjs",
+        ".ai/logs/summary.md"
+      ],
+      "tests": ["node .ai/logs/tools/report.mjs"],
+      "status": "partial-all-5-members-must-log"
+    },
+    {
+      "requirementId": "CON-PRC-04",
+      "sources": ["FB-M1"],
+      "adrs": ["docs/adr/ADR-005-specifications-artifacts-vs-prompts.md"],
+      "sddFeature": ".ai/sdd/specs/accounts-access/",
+      "code": [
+        ".ai/steering/product.md",
+        ".ai/steering/tech-stack.md",
+        ".ai/steering/conventions.md",
+        ".ai/steering/principles.md",
+        ".ai/sdd/specs/accounts-access/requirements.md",
+        ".ai/sdd/specs/accounts-access/design.md",
+        ".ai/sdd/specs/accounts-access/tasks.md",
+        ".ai/sdd/specs/accounts-access/review.md",
+        ".ai/sdd/specs/accounts-access/validation.md"
+      ],
+      "tests": ["PL6 review + PL7 validation"],
+      "status": "partial-1-of-8-features-specified"
+    }
+  ]
+}
